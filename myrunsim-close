@@ -1,0 +1,10 @@
+bin/usimm-close input/4channel.cfg input/Traces/Trace_A input/Traces/Trace_A input/Traces/Trace_A input/Traces/Trace_A > output/AAAA-close &
+bin/usimm-close input/4channel.cfg input/Traces/Trace_B input/Traces/Trace_B input/Traces/Trace_B input/Traces/Trace_B > output/BBBB-close &
+bin/usimm-close input/4channel.cfg input/Traces/Trace_C input/Traces/Trace_C input/Traces/Trace_C input/Traces/Trace_C > output/CCCC-close &
+bin/usimm-close input/4channel.cfg input/Traces/Trace_D input/Traces/Trace_D input/Traces/Trace_D input/Traces/Trace_D > output/DDDD-close &&
+bin/usimm-close input/4channel.cfg input/Traces/Trace_E input/Traces/Trace_E input/Traces/Trace_E input/Traces/Trace_E > output/EEEE-close &
+bin/usimm-close input/4channel.cfg input/Traces/Trace_A input/Traces/Trace_B input/Traces/Trace_C input/Traces/Trace_D > output/ABCD-close &
+bin/usimm-close input/4channel.cfg input/Traces/Trace_A input/Traces/Trace_B input/Traces/Trace_C input/Traces/Trace_E > output/ABCE-close &
+bin/usimm-close input/4channel.cfg input/Traces/Trace_A input/Traces/Trace_B input/Traces/Trace_D input/Traces/Trace_E > output/ABDE-close &&
+bin/usimm-close input/4channel.cfg input/Traces/Trace_A input/Traces/Trace_C input/Traces/Trace_D input/Traces/Trace_E > output/ACDE-close &
+bin/usimm-close input/4channel.cfg input/Traces/Trace_B input/Traces/Trace_C input/Traces/Trace_D input/Traces/Trace_E > output/BCDE-close 
