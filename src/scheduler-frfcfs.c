@@ -6,10 +6,17 @@
 
 extern long long int CYCLE_VAL;
 
+long int CAPN = 1;
+long int count_col_hits[MAX_NUM_CHANNELS];
   void
 init_scheduler_vars ()
 {
   // initialize all scheduler variables here
+
+  for(int i = 0; i < MAX_NUM_CHANNELS; i++)
+  {
+    count_col_hits[i] = 0;
+  }
 
   return;
 }
@@ -80,9 +87,26 @@ schedule (int channel)
   // issue the command for the first request that is ready
   if (drain_writes[channel])
   {
+    // prioritize open row hits
+    LL_FOREACH (write_queue_head[channel], wr_ptr)
+    {
+      if (count_col_hits[channel] == CAPN) {
+        count_col_hits[channel] = 0;
+        break;
+      }
+      // if COL_WRITE_CMD is the next command, then that means the appropriate row must already be open
+      if (wr_ptr->command_issuable
+          && (wr_ptr->next_command == COL_WRITE_CMD))
+      {
+        count_col_hits[channel]++;
+        issue_request_command (wr_ptr);
+        return;
+      }
+    }
 
     LL_FOREACH (write_queue_head[channel], wr_ptr)
     {
+      // if no open rows, just issue any other available commands
       if (wr_ptr->command_issuable)
       {
         issue_request_command (wr_ptr);
@@ -100,6 +124,24 @@ schedule (int channel)
   {
     LL_FOREACH (read_queue_head[channel], rd_ptr)
     {
+      if (count_col_hits[channel] == CAPN) {
+        count_col_hits[channel] = 0;
+        break;
+      }
+
+      // if COL_WRITE_CMD is the next command, then that means the appropriate row must already be open
+      if (rd_ptr->command_issuable
+          && (rd_ptr->next_command == COL_READ_CMD))
+      {
+        count_col_hits[channel]++;
+        issue_request_command (rd_ptr);
+        return;
+      }
+    }
+
+    LL_FOREACH (read_queue_head[channel], rd_ptr)
+    {
+      // no hits, so just issue other available commands
       if (rd_ptr->command_issuable)
       {
         issue_request_command (rd_ptr);

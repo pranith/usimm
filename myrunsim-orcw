@@ -1,0 +1,10 @@
+bin/usimm-orcw input/4channel.cfg input/Traces/Trace_A input/Traces/Trace_A input/Traces/Trace_A input/Traces/Trace_A > output/AAAA-orcw &
+bin/usimm-orcw input/4channel.cfg input/Traces/Trace_B input/Traces/Trace_B input/Traces/Trace_B input/Traces/Trace_B > output/BBBB-orcw &
+bin/usimm-orcw input/4channel.cfg input/Traces/Trace_C input/Traces/Trace_C input/Traces/Trace_C input/Traces/Trace_C > output/CCCC-orcw &
+bin/usimm-orcw input/4channel.cfg input/Traces/Trace_D input/Traces/Trace_D input/Traces/Trace_D input/Traces/Trace_D > output/DDDD-orcw &&
+bin/usimm-orcw input/4channel.cfg input/Traces/Trace_E input/Traces/Trace_E input/Traces/Trace_E input/Traces/Trace_E > output/EEEE-orcw &
+bin/usimm-orcw input/4channel.cfg input/Traces/Trace_A input/Traces/Trace_B input/Traces/Trace_C input/Traces/Trace_D > output/ABCD-orcw &
+bin/usimm-orcw input/4channel.cfg input/Traces/Trace_A input/Traces/Trace_B input/Traces/Trace_C input/Traces/Trace_E > output/ABCE-orcw &
+bin/usimm-orcw input/4channel.cfg input/Traces/Trace_A input/Traces/Trace_B input/Traces/Trace_D input/Traces/Trace_E > output/ABDE-orcw &&
+bin/usimm-orcw input/4channel.cfg input/Traces/Trace_A input/Traces/Trace_C input/Traces/Trace_D input/Traces/Trace_E > output/ACDE-orcw &
+bin/usimm-orcw input/4channel.cfg input/Traces/Trace_B input/Traces/Trace_C input/Traces/Trace_D input/Traces/Trace_E > output/BCDE-orcw 
