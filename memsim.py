@@ -72,7 +72,7 @@ def run_bench(run_name, bench, base_dir):
 def memsim(run_name):
     cur_dir = os.getcwd()
     run_dir = os.path.join(RESULTS_DIR, run_name)
-    bin_name = BIN + run_name;
+    bin_name = BIN + '-' + run_name;
 
     if os.path.exists(run_dir):
         print("Erasing current directory...");
