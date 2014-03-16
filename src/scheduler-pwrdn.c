@@ -22,6 +22,8 @@ long long int pwrdn[MAX_NUM_CHANNELS][MAX_NUM_RANKS];
    This matches up quite closely with a rank's time spent in ACT_PDN. */
 long long int timedn[MAX_NUM_CHANNELS][MAX_NUM_RANKS];
 
+// keep track of idle cycles
+long long int timeidle[MAX_NUM_CHANNELS][MAX_NUM_RANKS];
 
   void
 init_scheduler_vars ()
@@ -35,6 +37,7 @@ init_scheduler_vars ()
       /* Initializing pwrdn and timedn arrays. */
       pwrdn[i][j] = 0;
       timedn[i][j] = 0;
+      timeidle[i][j] = 0;
     }
   }
 
@@ -90,6 +93,7 @@ schedule (int channel)
         timedn[channel][i] =
           timedn[channel][i] + CYCLE_VAL - pwrdn[channel][i];
         pwrdn[channel][i] = 0;
+        timeidle[channel][i] = 0;
       }
     }
   }
@@ -130,21 +134,19 @@ schedule (int channel)
     {
       if (wr_ptr->command_issuable)
       {
-        if (issue_request_command (wr_ptr))
+        if (issue_request_command(wr_ptr))
         {
           /* If the command was successful, mark that the rank has now been woken up.  Just book-keeping being done. */
           if (pwrdn[wr_ptr->dram_addr.channel][wr_ptr->dram_addr.rank])
           {
-            timedn[wr_ptr->dram_addr.channel][wr_ptr->dram_addr.
-              rank] =
-              timedn[wr_ptr->dram_addr.channel][wr_ptr->dram_addr.
-              rank] + CYCLE_VAL -
-              pwrdn[wr_ptr->dram_addr.channel][wr_ptr->dram_addr.
-              rank];
-            pwrdn[wr_ptr->dram_addr.channel][wr_ptr->dram_addr.rank] =
-              0;
+            timedn[wr_ptr->dram_addr.channel][wr_ptr->dram_addr.rank] = 
+              timedn[wr_ptr->dram_addr.channel][wr_ptr->dram_addr.rank] + 
+              CYCLE_VAL - pwrdn[wr_ptr->dram_addr.channel][wr_ptr->dram_addr.rank];
+
+            pwrdn[wr_ptr->dram_addr.channel][wr_ptr->dram_addr.rank] = 0;
             // printf("Powering up c%d r%d in cycle %lld\n", wr_ptr->dram_addr.channel, wr_ptr->dram_addr.rank, CYCLE_VAL);
           }
+          timeidle[wr_ptr->dram_addr.channel][wr_ptr->dram_addr.rank] = 0;
         }
 
         break;
@@ -153,17 +155,22 @@ schedule (int channel)
     /* If you were unable to drain any writes this cycle, go ahead and try to power down. */
     for (i = 0; i < NUM_RANKS; i++)
     {
-      if (!pwrdn[channel][i])
+      if (!pwrdn[channel][i]) 
       {
-        if (is_powerdown_fast_allowed (channel, i))
+        if (timeidle[channel][i] >= PWRN)
         {
-          if (issue_powerdown_command (channel, i, PWR_DN_FAST_CMD))
+          if (is_powerdown_fast_allowed (channel, i))
           {
-            pwrdn[channel][i] = CYCLE_VAL;
-            // printf("Powered down c%d r%d in cycle %lld\n", channel, i, CYCLE_VAL);
-            return;
+            if (issue_powerdown_command (channel, i, PWR_DN_FAST_CMD))
+            {
+              pwrdn[channel][i] = CYCLE_VAL;
+              timeidle[channel][i] = 0;
+              // printf("Powered down c%d r%d in cycle %lld\n", channel, i, CYCLE_VAL);
+              return;
+            }
           }
-        }
+        } 
+        timeidle[channel][i]++;
       }
     }
     return;
@@ -184,16 +191,13 @@ schedule (int channel)
           /* If the command was successful, mark that the rank has now been woken up.  Just book-keeping being done. */
           if (pwrdn[rd_ptr->dram_addr.channel][rd_ptr->dram_addr.rank])
           {
-            timedn[rd_ptr->dram_addr.channel][rd_ptr->dram_addr.
-              rank] =
-              timedn[rd_ptr->dram_addr.channel][rd_ptr->dram_addr.
-              rank] + CYCLE_VAL -
-              pwrdn[rd_ptr->dram_addr.channel][rd_ptr->dram_addr.
-              rank];
-            pwrdn[rd_ptr->dram_addr.channel][rd_ptr->dram_addr.rank] =
-              0;
+            timedn[rd_ptr->dram_addr.channel][rd_ptr->dram_addr.rank] = 
+              timedn[rd_ptr->dram_addr.channel][rd_ptr->dram_addr.rank] + 
+              CYCLE_VAL - pwrdn[rd_ptr->dram_addr.channel][rd_ptr->dram_addr.rank];
+            pwrdn[rd_ptr->dram_addr.channel][rd_ptr->dram_addr.rank] = 0;
             // printf("Powering up c%d r%d in cycle %lld\n", rd_ptr->dram_addr.channel, rd_ptr->dram_addr.rank, CYCLE_VAL);
           }
+          timeidle[rd_ptr->dram_addr.channel][rd_ptr->dram_addr.rank] = 0;
         }
         break;
       }
@@ -201,17 +205,22 @@ schedule (int channel)
     /* If you were unable to issue any reads this cycle, go ahead and try to power down. */
     for (i = 0; i < NUM_RANKS; i++)
     {
-      if (!pwrdn[channel][i])
+      if (!pwrdn[channel][i]) 
       {
-        if (is_powerdown_fast_allowed (channel, i))
+        if (timeidle[channel][i] >= PWRN) 
         {
-          if (issue_powerdown_command (channel, i, PWR_DN_FAST_CMD))
+          if (is_powerdown_fast_allowed (channel, i))
           {
-            pwrdn[channel][i] = CYCLE_VAL;
-            // printf("Powered down c%d r%d in cycle %lld\n", channel, i, CYCLE_VAL);
-            return;
+            if (issue_powerdown_command (channel, i, PWR_DN_FAST_CMD))
+            {
+              pwrdn[channel][i] = CYCLE_VAL;
+              timeidle[channel][i] = 0;
+              // printf("Powered down c%d r%d in cycle %lld\n", channel, i, CYCLE_VAL);
+              return;
+            }
           }
-        }
+        } 
+        timeidle[channel][i]++;
       }
     }
     return;
