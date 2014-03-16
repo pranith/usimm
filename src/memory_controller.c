@@ -2069,36 +2069,36 @@ than every tRC, then pds_act will be derated to give "psch_act" (SCHeduled Power
     printf
       ("Channel %d Rank %d Read Other(%%)            %9.2f # %% cycles other Ranks on the channel performed a Read\n",
        channel, rank,
-       \((double)
+       ((double)
        stats_time_spent_terminating_reads_from_other_ranks[channel][rank]
        / CYCLE_VAL));
     printf
       ("Channel %d Rank %d Write Other(%%)           %9.2f # %% cycles other Ranks on the channel performed a Write\n",
        channel, rank,
-       \((double)
+       ((double)
        stats_time_spent_terminating_writes_to_other_ranks[channel][rank]
        / CYCLE_VAL));
     printf
       ("Channel %d Rank %d PRE_PDN_FAST(%%)          %9.2f # %% cycles the Rank was in Fast Power Down and all Banks were Precharged\n",
        channel, rank,
-       \((double)
+       ((double)
        stats_time_spent_in_precharge_power_down_fast[channel][rank] /
        CYCLE_VAL));
     printf
       ("Channel %d Rank %d PRE_PDN_SLOW(%%)          %9.2f # %% cycles the Rank was in Slow Power Down and all Banks were Precharged\n",
        channel, rank,
-       \((double)
+       ((double)
        stats_time_spent_in_precharge_power_down_slow[channel][rank] /
        CYCLE_VAL));
     printf
       ("Channel %d Rank %d ACT_PDN(%%)               %9.2f # %% cycles the Rank was in Active Power Down and atleast one Bank was Active\n",
        channel, rank,
-       \((double) stats_time_spent_in_active_power_down[channel][rank] /
+       ((double) stats_time_spent_in_active_power_down[channel][rank] /
        CYCLE_VAL));
     printf
       ("Channel %d Rank %d ACT_STBY(%%)              %9.2f # %% cycles the Rank was in Standby and atleast one bank was Active\n",
        channel, rank,
-       \((double) stats_time_spent_in_active_standby[channel][rank] /
+       ((double) stats_time_spent_in_active_standby[channel][rank] /
        CYCLE_VAL));
     printf
       ("Channel %d Rank %d PRE_STBY(%%)              %9.2f # %% cycles the Rank was in Standby and all Banks were Precharged\n",
