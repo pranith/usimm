@@ -3,9 +3,9 @@ import os
 import shutil
 import sys
 
-SIM_DIR = '/user/pranith/ece8873/assignment3/usimm-v1.3'
-RESULTS_DIR = '/user/pranith/ece8873/assignment3/results'
-TRACE_DIR = '/user/pranith/ece8873/assignment3/Traces'
+SIM_DIR = '/home/pranith/ece8873/assignment3/usimm-v1.3'
+RESULTS_DIR = '/home/pranith/ece8873/assignment3/results'
+TRACE_DIR = '/home/pranith/ece8873/assignment3/Traces'
 TRACE_FILES = {'A': 'Trace_A', 'B': 'Trace_B', 'C': 'Trace_C', 'D': 'Trace_D', 'E': 'Trace_E'}
 BENCHMARKS = ['AAAA', 'BBBB', 'CCCC', 'DDDD', 'EEEE', 'ABCD', 'ABCE', 'ABDE', 'ACDE', 'BCDE']
 BIN = 'bin/usimm'
