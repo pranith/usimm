@@ -12,8 +12,8 @@ OBJS3 = $(OBJS) $(OBJDIR)/scheduler-orcw.o
 OBJS4 = $(OBJS) $(OBJDIR)/scheduler-fair.o
 OBJS5 = $(OBJS) $(OBJDIR)/scheduler-frfcfs.o
 CC = gcc
-DEBUG = -g
-CFLAGS = -std=c99 -Wall -c $(DEBUG)
+DEBUG = 
+CFLAGS = -O3 -std=c99 -Wall -c $(DEBUG)
 LFLAGS = -Wall $(DEBUG)
 
 .PHONY: all
@@ -38,6 +38,7 @@ $(BINDIR)/$(OUT4): $(OBJS4)
 
 $(BINDIR)/$(OUT5): $(OBJS5) scheduler-frfcfs.c
 	$(CC) $(LFLAGS) $(OBJS5) -o $(BINDIR)/$(OUT5)
+	rm -f $(OBJDIR)/scheduler-frfcfs.o
 	chmod 777 $(BINDIR)/$(OUT5)
 
 $(OBJDIR)/main.o: main.c processor.h configfile.h memory_controller.h scheduler.h params.h
