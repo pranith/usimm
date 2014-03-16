@@ -2,7 +2,7 @@ OUT1 = usimm-open
 OUT2 = usimm-close
 OUT3 = usimm-orcw
 OUT4 = usimm-fair
-OUT5 = usimm-frfcfs
+OUT5 = usimm-frfcfs-cap$(CAPN)
 BINDIR = ../bin
 OBJDIR = ../obj
 OBJS  = $(OBJDIR)/main.o $(OBJDIR)/memory_controller.o 
@@ -36,7 +36,7 @@ $(BINDIR)/$(OUT4): $(OBJS4)
 	$(CC) $(LFLAGS) $(OBJS4) -o $(BINDIR)/$(OUT4)
 	chmod 777 $(BINDIR)/$(OUT4)
 
-$(BINDIR)/$(OUT5): $(OBJS5)
+$(BINDIR)/$(OUT5): $(OBJS5) scheduler-frfcfs.c
 	$(CC) $(LFLAGS) $(OBJS5) -o $(BINDIR)/$(OUT5)
 	chmod 777 $(BINDIR)/$(OUT5)
 
@@ -65,9 +65,13 @@ $(OBJDIR)/scheduler-fair.o: scheduler-fair.c scheduler-fair.h utlist.h utils.h m
 	chmod 777 $(OBJDIR)/scheduler-fair.o
 
 $(OBJDIR)/scheduler-frfcfs.o: scheduler-frfcfs.c scheduler.h utlist.h utils.h memory_controller.h params.h
-	$(CC) $(CFLAGS) scheduler-frfcfs.c -o $(OBJDIR)/scheduler-frfcfs.o
+	$(CC) $(CFLAGS) scheduler-frfcfs.c -o $(OBJDIR)/scheduler-frfcfs.o -DCAPN=$(CAPN)
+	touch scheduler-frfcfs.c
 	chmod 777 $(OBJDIR)/scheduler-frfcfs.o
 
 clean:
-	rm -f $(BINDIR)/$(OUT1) $(BINDIR)/$(OUT2) $(BINDIR)/$(OUT3) $(OBJS1) $(OBJS2) $(OBJS3)
+	mv -f $(BINDIR) old_bin
+	mv -f $(OBJDIR) old_obj
+	mkdir -p $(BINDIR)
+	mkdir -p $(OBJDIR)
 

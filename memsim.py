@@ -3,9 +3,9 @@ import os
 import shutil
 import sys
 
-SIM_DIR = '/user/dmanatunga/ece8873/assignment3/usimm-v1.3'
-RESULTS_DIR = '/user/dmanatunga/ece8873/assignment3/results'
-TRACE_DIR = '/user/dmanatunga/ece8873/assignment3/Traces'
+SIM_DIR = '/user/pranith/ece8873/assignment3/usimm-v1.3'
+RESULTS_DIR = '/user/pranith/ece8873/assignment3/results'
+TRACE_DIR = '/user/pranith/ece8873/assignment3/Traces'
 TRACE_FILES = {'A': 'Trace_A', 'B': 'Trace_B', 'C': 'Trace_C', 'D': 'Trace_D', 'E': 'Trace_E'}
 BENCHMARKS = ['AAAA', 'BBBB', 'CCCC', 'DDDD', 'EEEE', 'ABCD', 'ABCE', 'ABDE', 'ACDE', 'BCDE']
 BIN = 'bin/usimm'
@@ -72,14 +72,15 @@ def run_bench(run_name, bench, base_dir):
 def memsim(run_name):
     cur_dir = os.getcwd()
     run_dir = os.path.join(RESULTS_DIR, run_name)
+    bin_name = BIN + run_name;
 
     if os.path.exists(run_dir):
         print("Erasing current directory...");
         shutil.rmtree(run_dir)
         
     os.makedirs(run_dir)
-    shutil.copyfile(os.path.join(cur_dir, BIN), os.path.join(run_dir, SIM))
-    shutil.copystat(os.path.join(cur_dir, BIN), os.path.join(run_dir, SIM))
+    shutil.copyfile(os.path.join(cur_dir, bin_name), os.path.join(run_dir, SIM))
+    shutil.copystat(os.path.join(cur_dir, bin_name), os.path.join(run_dir, SIM))
     os.system('cp %s/input/*.vi %s' % (SIM_DIR, run_dir))
     shutil.copyfile(os.path.join(cur_dir, CONFIG_FILE), os.path.join(run_dir, CONFIG))
 

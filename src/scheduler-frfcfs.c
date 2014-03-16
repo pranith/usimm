@@ -6,12 +6,19 @@
 
 extern long long int CYCLE_VAL;
 
-long int CAPN = 1;
 long int count_col_hits[MAX_NUM_CHANNELS];
   void
 init_scheduler_vars ()
 {
   // initialize all scheduler variables here
+
+  /*
+  char *cap_env = getenv("CAPN");
+
+  if (cap_env)
+    if(sscanf(cap_env, "%d", &CAPN) == EOF)
+      fprintf(stderr, "CAPN env variable setting failed");
+      */
 
   for(int i = 0; i < MAX_NUM_CHANNELS; i++)
   {
