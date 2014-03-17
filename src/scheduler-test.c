@@ -234,8 +234,11 @@ schedule (int channel)
     total_hits     += hits[channel][core];
   }
 
-  for (int core = 0; core < MAX_THREADS; core++)
-    priority[channel][core] = hits[channel][core] / total_hits +  accesses[channel][core] / total_accesses;
+  for (int core = 0; core < MAX_THREADS; core++) 
+  {
+    if (total_hits && total_accesses)
+      priority[channel][core] = hits[channel][core] / total_hits +  accesses[channel][core] / total_accesses;
+  }
 
 }
 
