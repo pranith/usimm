@@ -5,18 +5,43 @@
 #include "memory_controller.h"
 #include "params.h"
 
-/* A basic FCFS policy augmented with a not-so-clever close-page policy.
+/* A scheduling algorithm based on Priority Based Fair Scheduling policy
+ *
+ * A basic FCFS policy augmented with a clever close-page policy.
+   Instead of immediately closing the page, wait for a few idle cycles to close
+   the page based on the priority of the thread which has last accessed this
+   row. A thread with higher priority has a higher probability of accessing this row. 
+
+   priority is calculated based on observed accesses and hit ratio in row buffer
+   
+   This is as follows: priority = hits_in_row_buffer / accesses 
+
    If the memory controller is unable to issue a command this cycle, find
    a bank that recently serviced a column-wr and close it (precharge it). */
 
 
 extern long long int CYCLE_VAL;
+#define MAX_THREADS  64
 
 /* A data structure to see if a bank is a candidate for precharge. */
 int recent_colacc[MAX_NUM_CHANNELS][MAX_NUM_RANKS][MAX_NUM_BANKS];
 
 /* Keeping track of how many preemptive precharges are performed. */
 long long int num_aggr_precharge = 0;
+double priority[MAX_NUM_CHANNELS][MAX_THREADS];
+long long accesses[MAX_NUM_CHANNELS][MAX_THREADS];
+long long hits[MAX_NUM_CHANNELS][MAX_THREADS];
+
+int get_core_highest_priority(int channel)
+{
+  int max_index = 0;
+  for (int i = 0; i < MAX_THREADS; i++)
+    if (priority[channel][max_index] > priority[channel][i])
+        max_index = i;
+
+  return max_index;
+}
+
 
   void
 init_scheduler_vars ()
@@ -33,12 +58,20 @@ init_scheduler_vars ()
       }
     }
   }
+  for(int channel = 0; channel < NUM_CHANNELS; channel++) 
+    for(int core =0; core < NUMCORES; core++)  {
+      priority[channel][core] = 0;
+      accesses[channel][core] = 0;
+      hits[channel][core]     = 0;
+    }
+
+
 
   return;
 }
 
 // write queue high water mark; begin draining writes if write queue exceeds this value
-#define HI_WM 60
+#define HI_WM 40
 
 // end write queue drain once write queue has this many writes in it
 #define LO_WM 20
@@ -105,11 +138,31 @@ schedule (int channel)
   // issue the command for the first request that is ready
   if (drain_writes[channel])
   {
+
     LL_FOREACH (write_queue_head[channel], wr_ptr)
     {
       if (wr_ptr->command_issuable)
       {
+        /* Before issuing the command, see if this bank is now a candidate for closure (if it just did a column-rd/wr).
+           If the bank just did an activate or precharge, it is not a candidate for closure. */
+        if (wr_ptr->next_command == COL_WRITE_CMD)
+        {
+          if (wr_ptr->thread_id != get_core_highest_priority(channel))
+            recent_colacc[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] = 1;
+          else
+            recent_colacc[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] = 0;
+          hits[channel][wr_ptr->thread_id]++;
+        }
+        if (wr_ptr->next_command == ACT_CMD)
+        {
+          recent_colacc[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] = 0;
+        }
+        if (wr_ptr->next_command == PRE_CMD)
+        {
+          recent_colacc[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] = 0;
+        }
         issue_request_command (wr_ptr);
+        accesses[channel][wr_ptr->thread_id]++;
         break;
       }
     }
@@ -129,23 +182,22 @@ schedule (int channel)
            If the bank just did an activate or precharge, it is not a candidate for closure. */
         if (rd_ptr->next_command == COL_READ_CMD)
         {
-          recent_colacc[channel][rd_ptr->dram_addr.rank][rd_ptr->
-            dram_addr.
-            bank] = 1;
+          if (rd_ptr->thread_id != get_core_highest_priority(channel))
+            recent_colacc[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank] = 1;
+          else
+            recent_colacc[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank] = 0;
+          hits[channel][rd_ptr->thread_id]++;
         }
         if (rd_ptr->next_command == ACT_CMD)
         {
-          recent_colacc[channel][rd_ptr->dram_addr.rank][rd_ptr->
-            dram_addr.
-            bank] = 0;
+          recent_colacc[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank] = 0;
         }
         if (rd_ptr->next_command == PRE_CMD)
         {
-          recent_colacc[channel][rd_ptr->dram_addr.rank][rd_ptr->
-            dram_addr.
-            bank] = 0;
+          recent_colacc[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank] = 0;
         }
         issue_request_command (rd_ptr);
+        accesses[channel][rd_ptr->thread_id]++;
         break;
       }
     }
@@ -173,6 +225,17 @@ schedule (int channel)
     }
   }
 
+  long long total_accesses = 0;
+  long long total_hits     = 0;
+  // update priorities
+  for (int core = 0; core < MAX_THREADS; core++) 
+  {
+    total_accesses += accesses[channel][core];
+    total_hits     += hits[channel][core];
+  }
+
+  for (int core = 0; core < MAX_THREADS; core++)
+    priority[channel][core] = hits[channel][core] / total_hits +  accesses[channel][core] / total_accesses;
 
 }
 
