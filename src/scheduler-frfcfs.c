@@ -6,9 +6,6 @@
 
 extern long long int CYCLE_VAL;
 
-/* A data structure to see if a bank is a candidate for precharge. */
-int recent_colacc[MAX_NUM_CHANNELS][MAX_NUM_RANKS][MAX_NUM_BANKS];
-
 long int count_col_hits[MAX_NUM_CHANNELS];
   void
 init_scheduler_vars ()
@@ -26,13 +23,6 @@ init_scheduler_vars ()
   for(int i = 0; i < MAX_NUM_CHANNELS; i++)
   {
     count_col_hits[i] = 0;
-    for (int j = 0; j < MAX_NUM_RANKS; j++)
-    {
-      for (int k = 0; k < MAX_NUM_BANKS; k++)
-      {
-        recent_colacc[i][j][k] = 0;
-      }
-    }
   }
 
   return;
@@ -111,23 +101,16 @@ schedule (int channel)
       if (wr_ptr->command_issuable
           && (wr_ptr->next_command == COL_WRITE_CMD))
       {
-        count_col_hits[channel]++;
+        if (count_col_hits[channel] >= CAPN) {
+          // close the row by issuing pre-charge 
+          if (is_precharge_allowed(channel, wr_ptr->dram_addr.rank, wr_ptr->dram_addr.bank))
+            if (issue_precharge_command(channel, wr_ptr->dram_addr.rank, wr_ptr->dram_addr.bank)) {
+              count_col_hits[channel] = 0;
+              return;
+            }
+        }
         issue_request_command (wr_ptr);
-        if (count_col_hits[channel] == CAPN) {
-          count_col_hits[channel] = 0;
-        }
-        if (wr_ptr->next_command == ACT_CMD)
-        {
-          recent_colacc[channel][wr_ptr->dram_addr.rank][wr_ptr->
-            dram_addr.
-            bank] = 0;
-        }
-        if (wr_ptr->next_command == PRE_CMD)
-        {
-          recent_colacc[channel][wr_ptr->dram_addr.rank][wr_ptr->
-            dram_addr.
-            bank] = 0;
-        }
+        count_col_hits[channel]++;
  
         return;
       }
@@ -158,24 +141,16 @@ schedule (int channel)
       if (rd_ptr->command_issuable
           && (rd_ptr->next_command == COL_READ_CMD))
       {
-        count_col_hits[channel]++;
+        if (count_col_hits[channel] >= CAPN) {
+          // close the row by issuing pre-charge 
+          if (is_precharge_allowed(channel, rd_ptr->dram_addr.rank, rd_ptr->dram_addr.bank))
+            if (issue_precharge_command(channel, rd_ptr->dram_addr.rank, rd_ptr->dram_addr.bank)) {
+              count_col_hits[channel] = 0;
+              return;
+            }
+        }
         issue_request_command (rd_ptr);
-        if (count_col_hits[channel] == CAPN) {
-          count_col_hits[channel] = 0;
-          recent_colacc[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank] = 1;
-        }
-        if (rd_ptr->next_command == ACT_CMD)
-        {
-          recent_colacc[channel][rd_ptr->dram_addr.rank][rd_ptr->
-            dram_addr.
-            bank] = 0;
-        }
-        if (rd_ptr->next_command == PRE_CMD)
-        {
-          recent_colacc[channel][rd_ptr->dram_addr.rank][rd_ptr->
-            dram_addr.
-            bank] = 0;
-        }
+        count_col_hits[channel]++;
 
         return;
       }
