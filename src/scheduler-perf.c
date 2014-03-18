@@ -112,7 +112,7 @@ schedule (int channel)
 
         // issue auto-precharge if possible
         if ((hits[channel][wr_ptr->thread_id] / accesses[channel][wr_ptr->thread_id]) >= threshold_open && 
-            is_autoprecharge_allowed(channel, rd_ptr->dram_addr.rank, rd_ptr->dram_addr.bank))
+            is_autoprecharge_allowed(channel, wr_ptr->dram_addr.rank, wr_ptr->dram_addr.bank))
           issue_autoprecharge(channel, wr_ptr->dram_addr.rank, wr_ptr->dram_addr.bank);
  
         return;
@@ -136,7 +136,6 @@ schedule (int channel)
   // command can be issued in this cycle and issue it 
   // Simple FCFS 
   if (!drain_writes[channel])
-    accesses[channel][wr_ptr->thread_id]++;
   {
     LL_FOREACH (read_queue_head[channel], rd_ptr)
     {
