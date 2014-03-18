@@ -6,13 +6,17 @@ ifndef PWRN
 	PWRN = 1
 endif
 
+ifndef TARGET
+	TARGET = 'test'
+endif
+
 OUT1 = usimm-open 
 OUT2 = usimm-close
 OUT3 = usimm-orcw
 OUT4 = usimm-fair
 OUT5 = usimm-frfcfs-cap$(CAPN)
 OUT6 = usimm-pwrdn-$(PWRN)
-OUT7 = usimm-test
+OUT7 = usimm-$(TARGET)
 BINDIR = ../bin
 OBJDIR = ../obj
 OBJS  = $(OBJDIR)/main.o $(OBJDIR)/memory_controller.o 
@@ -22,7 +26,7 @@ OBJS3 = $(OBJS) $(OBJDIR)/scheduler-orcw.o
 OBJS4 = $(OBJS) $(OBJDIR)/scheduler-fair.o
 OBJS5 = $(OBJS) $(OBJDIR)/scheduler-frfcfs.o
 OBJS6 = $(OBJS) $(OBJDIR)/scheduler-pwrdn.o
-OBJS7 = $(OBJS) $(OBJDIR)/scheduler-test.o
+OBJS7 = $(OBJS) $(OBJDIR)/scheduler-$(TARGET).o
 CC = gcc
 DEBUG = 
 CFLAGS = -O3 -std=c99 -Wall -c $(DEBUG)
@@ -58,7 +62,7 @@ $(BINDIR)/$(OUT6): $(OBJS6) scheduler-pwrdn.c
 	rm -f $(OBJDIR)/scheduler-pwrdn.o
 	chmod 777 $(BINDIR)/$(OUT6)
 
-$(BINDIR)/$(OUT7): $(OBJS7) scheduler-test.c
+$(BINDIR)/$(OUT7): $(OBJS7) scheduler-$(TARGET).c
 	$(CC) $(LFLAGS) $(OBJS7) -o $(BINDIR)/$(OUT7)
 	chmod 777 $(BINDIR)/$(OUT7)
 
@@ -94,9 +98,9 @@ $(OBJDIR)/scheduler-pwrdn.o: scheduler-pwrdn.c scheduler.h utlist.h utils.h memo
 	$(CC) $(CFLAGS) scheduler-pwrdn.c -o $(OBJDIR)/scheduler-pwrdn.o -DPWRN=$(PWRN)
 	chmod 777 $(OBJDIR)/scheduler-pwrdn.o
 
-$(OBJDIR)/scheduler-test.o: scheduler-test.c scheduler.h utlist.h utils.h memory_controller.h params.h
-	$(CC) $(CFLAGS) scheduler-test.c -o $(OBJDIR)/scheduler-test.o 
-	chmod 777 $(OBJDIR)/scheduler-test.o
+$(OBJDIR)/scheduler-$(TARGET).o: scheduler-$(TARGET).c scheduler.h utlist.h utils.h memory_controller.h params.h
+	$(CC) $(CFLAGS) scheduler-$(TARGET).c -o $(OBJDIR)/scheduler-$(TARGET).o 
+	chmod 777 $(OBJDIR)/scheduler-$(TARGET).o
 
 #clean:
 #	mv -f $(BINDIR) old_bin

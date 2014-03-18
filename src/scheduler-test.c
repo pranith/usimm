@@ -9,12 +9,12 @@
  *
  * A basic FCFS policy augmented with a clever close-page policy.
    Instead of immediately closing the page, wait for a few idle cycles to close
-   the page based on the priority of the thread which has last accessed this
-   row. A thread with higher priority has a higher probability of accessing this row. 
-
-   priority is calculated based on observed accesses and hit ratio in row buffer
+   the page based on the hit rate of the thread on each core which has last accessed this
+   row. 
    
-   This is as follows: priority = hits_in_row_buffer / accesses 
+   This is as follows: hit rate = hits_in_row_buffer / accesses 
+
+   break even hit rate to keep page open is T_RP / (T_RP+T_RCD)
 
    If the memory controller is unable to issue a command this cycle, find
    a bank that recently serviced a column-wr and close it (precharge it). */
@@ -22,6 +22,8 @@
 
 extern long long int CYCLE_VAL;
 #define MAX_THREADS  64
+
+long CAPN;
 
 /* A data structure to see if a bank is a candidate for precharge. */
 int recent_colacc[MAX_NUM_CHANNELS][MAX_NUM_RANKS][MAX_NUM_BANKS];
@@ -46,6 +48,7 @@ int get_core_highest_priority(int channel)
   void
 init_scheduler_vars ()
 {
+  CAPN = T_RP / (T_RP+T_RCD);
   // initialize all scheduler variables here
   int i, j, k;
   for (i = 0; i < MAX_NUM_CHANNELS; i++)
@@ -60,7 +63,6 @@ init_scheduler_vars ()
   }
   for(int channel = 0; channel < NUM_CHANNELS; channel++) 
     for(int core =0; core < NUMCORES; core++)  {
-      priority[channel][core] = 0;
       accesses[channel][core] = 0;
       hits[channel][core]     = 0;
     }
