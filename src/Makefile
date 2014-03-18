@@ -7,7 +7,7 @@ ifndef PWRN
 endif
 
 ifndef TARGET
-	TARGET = 'test'
+	TARGET = test
 endif
 
 OUT1 = usimm-open 

@@ -114,7 +114,7 @@ schedule (int channel)
 
         // issue auto-precharge if possible
         if (count_col_hits[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] >= CAPN && 
-            is_autoprecharge_allowed(channel, rd_ptr->dram_addr.rank, rd_ptr->dram_addr.bank))
+            is_autoprecharge_allowed(channel, wr_ptr->dram_addr.rank, wr_ptr->dram_addr.bank))
           if (issue_autoprecharge(channel, wr_ptr->dram_addr.rank, wr_ptr->dram_addr.bank))
             count_col_hits[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] = 0;
  
