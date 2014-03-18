@@ -3,10 +3,12 @@
 #include "utils.h"
 
 #include "memory_controller.h"
+#include "params.h"
 
 extern long long int CYCLE_VAL;
 
-long int count_col_hits[MAX_NUM_CHANNELS];
+long int count_col_hits[MAX_NUM_CHANNELS][MAX_NUM_RANKS][MAX_NUM_BANKS];
+
   void
 init_scheduler_vars ()
 {
@@ -20,9 +22,15 @@ init_scheduler_vars ()
       fprintf(stderr, "CAPN env variable setting failed");
       */
 
-  for(int i = 0; i < MAX_NUM_CHANNELS; i++)
+  for (int i = 0; i < MAX_NUM_CHANNELS; i++)
   {
-    count_col_hits[i] = 0;
+    for (int j = 0; j < MAX_NUM_RANKS; j++)
+    {
+      for (int k = 0; k < MAX_NUM_BANKS; k++)
+      {
+        count_col_hits[i][j][k] = 0;
+      }
+    }
   }
 
   return;
@@ -101,16 +109,14 @@ schedule (int channel)
       if (wr_ptr->command_issuable
           && (wr_ptr->next_command == COL_WRITE_CMD))
       {
-        if (count_col_hits[channel] >= CAPN) {
-          // close the row by issuing pre-charge 
-          if (is_precharge_allowed(channel, wr_ptr->dram_addr.rank, wr_ptr->dram_addr.bank))
-            if (issue_precharge_command(channel, wr_ptr->dram_addr.rank, wr_ptr->dram_addr.bank)) {
-              count_col_hits[channel] = 0;
-              return;
-            }
-        }
+        count_col_hits[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank]++;
         issue_request_command (wr_ptr);
-        count_col_hits[channel]++;
+
+        // issue auto-precharge if possible
+        if (count_col_hits[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] >= CAPN && 
+            is_autoprecharge_allowed(channel, rd_ptr->dram_addr.rank, rd_ptr->dram_addr.bank))
+          if (issue_autoprecharge(channel, wr_ptr->dram_addr.rank, wr_ptr->dram_addr.bank))
+            count_col_hits[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] = 0;
  
         return;
       }
@@ -122,11 +128,10 @@ schedule (int channel)
       if (wr_ptr->command_issuable)
       {
         issue_request_command (wr_ptr);
+        count_col_hits[channel][wr_ptr->dram_addr.rank][wr_ptr->dram_addr.bank] = 0;
         break;
       }
     }
-
-    return;
   }
 
   // Draining Reads
@@ -141,16 +146,13 @@ schedule (int channel)
       if (rd_ptr->command_issuable
           && (rd_ptr->next_command == COL_READ_CMD))
       {
-        if (count_col_hits[channel] >= CAPN) {
-          // close the row by issuing pre-charge 
-          if (is_precharge_allowed(channel, rd_ptr->dram_addr.rank, rd_ptr->dram_addr.bank))
-            if (issue_precharge_command(channel, rd_ptr->dram_addr.rank, rd_ptr->dram_addr.bank)) {
-              count_col_hits[channel] = 0;
-              return;
-            }
-        }
+        count_col_hits[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank]++;
         issue_request_command (rd_ptr);
-        count_col_hits[channel]++;
+        // issue auto-precharge if possible
+        if (count_col_hits[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank] >= CAPN && 
+            is_autoprecharge_allowed(channel, rd_ptr->dram_addr.rank, rd_ptr->dram_addr.bank))
+          if (issue_autoprecharge(channel, rd_ptr->dram_addr.rank, rd_ptr->dram_addr.bank))
+            count_col_hits[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank] = 0;
 
         return;
       }
@@ -162,10 +164,31 @@ schedule (int channel)
       if (rd_ptr->command_issuable)
       {
         issue_request_command (rd_ptr);
+        count_col_hits[channel][rd_ptr->dram_addr.rank][rd_ptr->dram_addr.bank] = 0;
         break;
       }
     }
-    return;
+  }
+
+  // if no commands have been issued, check and issue precharge commands
+  if (!command_issued_current_cycle[channel])
+  {
+    for (int i = 0; i < NUM_RANKS; i++)
+    {
+      for (int j = 0; j < NUM_BANKS; j++)
+      {			/* For all banks on the channel.. */
+        if (count_col_hits[channel][i][j] >= CAPN)
+        {		/* See if this bank is a candidate. */
+          if (is_precharge_allowed (channel, i, j))
+          {		/* See if precharge is doable. */
+            if (issue_precharge_command (channel, i, j))
+            {
+              count_col_hits[channel][i][j] = 0;
+            }
+          }
+        }
+      }
+    }
   }
 }
 
