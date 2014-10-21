@@ -1,4 +1,4 @@
 
-bin/usimm-close input/1channel.cfg input/comm2 > output/c2-1 &
-bin/usimm-open input/1channel.cfg input/comm1 input/comm1 > output/c1-c1-1 &
+bin/scheduler-close input/1channel.cfg input/comm2 > output/c2-1 &
+bin/scheduler-fcfs input/1channel.cfg input/comm1 input/comm1 > output/c1-c1-1 &
 
